@@ -361,7 +361,7 @@ function transform_or(args)
 end
 
 function generate_function_code(parsed_expr; arg_names::Vector{Symbol} = [:t2],
-                                arg_types::Union{Nothing,Vector{Symbol}} = nothing,
+                                arg_types::Union{Nothing,Vector{Type}} = nothing,
                                 func_name::Symbol = :generated_func)
     local args_str::Vector
     if isnothing(arg_types) || length(arg_types) == 0
@@ -394,7 +394,7 @@ argument order. Returns the generated code, which is also written to `output_pat
 """
 function generate_function_code(input_path::AbstractString, output_path::AbstractString;
                                 arg_names::Union{Nothing,Vector{Symbol}} = nothing,
-                                arg_types::Union{Nothing,Vector{Symbol}} = nothing,
+                                arg_types::Union{Nothing,Vector{Type}} = nothing,
                                 func_name::Union{Nothing,Symbol} = nothing)
     text = read(input_path, String)
     isempty(strip(text)) && error("Input file is empty: $(input_path)")
