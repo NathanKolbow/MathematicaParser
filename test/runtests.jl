@@ -8,4 +8,5 @@ include("testutils.jl")
     include("test_piecewise_exhaustive.jl")
     include("test_precedence.jl")
     include("test_difficult.jl")
+    include("test_codegen.jl")
 end

@@ -1,0 +1,7 @@
+# Julia package artifacts
+Manifest.toml
+/docs/build/
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+/.vscode/

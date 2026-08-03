@@ -26,6 +26,30 @@ code = generate_function_code(expr; arg_names = [:t1, :t2])
 println(code)
 ```
 
+### From a file to a file
+
+`generate_function_code` also reads a Mathematica export straight from a text
+file and writes the generated Julia function to an output file (returning the
+same code as a string). The whole input file is treated as one expression, so
+exports that wrap across several lines are fine.
+
+```julia
+generate_function_code("difficult_functions/smoothfA.txt", "generated/smoothfA.jl")
+```
+
+By default the generated function is named after the input file (`smoothfA.txt`
+becomes `function smoothfA(...)`, falling back to `generated_func` if the base
+name is not a valid Julia identifier), and its arguments are the free variables
+of the expression sorted alphabetically — `smoothfA` above gets
+`(epsi, t, t1, t2)`. Pass `arg_names` and `func_name` to control both:
+
+```julia
+generate_function_code("difficult_functions/smoothfA.txt", "generated/smoothfA.jl";
+                       arg_names = [:t, :t1, :t2, :epsi], func_name = :smoothfA)
+```
+
+Missing directories in the output path are created.
+
 ### Supported constructs
 
 - Arithmetic (`+ - * /`), powers (`^`), and Mathematica scientific notation (`*^`)

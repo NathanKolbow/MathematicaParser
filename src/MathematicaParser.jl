@@ -360,15 +360,83 @@ function transform_or(args)
     return expr
 end
 
-function generate_function_code(parsed_expr::Expr; arg_names::Vector{Symbol} = [:t2])
+function generate_function_code(parsed_expr; arg_names::Vector{Symbol} = [:t2],
+                                func_name::Symbol = :generated_func)
     args_str = join(arg_names, ", ")
     body_str = string(parsed_expr)
 
     return """
-    function generated_func($args_str)
+    function $func_name($args_str)
         return $body_str
     end
     """
+end
+
+"""
+    generate_function_code(input_path, output_path; arg_names = nothing,
+                           func_name = <input file's base name>)
+
+Read the plain-text Mathematica expression stored in `input_path`, parse it, and
+write the generated Julia function definition to `output_path`. The whole file is
+treated as a single expression, so exports that wrap across several lines are fine.
+
+`func_name` defaults to the input file's base name (`smoothfA.txt` becomes
+`function smoothfA(...)`), falling back to `generated_func` when that base name is
+not a valid Julia identifier. `arg_names` defaults to the free variables found in
+the parsed expression, sorted alphabetically; pass it explicitly to control the
+argument order. Returns the generated code, which is also written to `output_path`.
+"""
+function generate_function_code(input_path::AbstractString, output_path::AbstractString;
+                                arg_names::Union{Nothing,Vector{Symbol}} = nothing,
+                                func_name::Union{Nothing,Symbol} = nothing)
+    text = read(input_path, String)
+    isempty(strip(text)) && error("Input file is empty: $(input_path)")
+
+    parsed_expr = parse_mathematica(strip(text))
+    args = arg_names === nothing ? free_variables(parsed_expr) : arg_names
+    name = func_name === nothing ? default_func_name(input_path) : func_name
+
+    code = generate_function_code(parsed_expr; arg_names = args, func_name = name)
+
+    out_dir = dirname(output_path)
+    isempty(out_dir) || mkpath(out_dir)
+    write(output_path, code)
+
+    return code
+end
+
+function default_func_name(input_path::AbstractString)
+    stem = splitext(basename(input_path))[1]
+    return Base.isidentifier(stem) ? Symbol(stem) : :generated_func
+end
+
+# Symbols the parser emits for Mathematica constants rather than for user
+# variables; they must not be mistaken for function arguments.
+const RESERVED_SYMBOLS = Set([:pi])
+
+# Free variables of a parsed expression, sorted so the argument order is
+# reproducible across runs.
+function free_variables(parsed_expr)
+    vars = Set{Symbol}()
+    collect_free_variables!(vars, parsed_expr)
+    return sort!(collect(vars))
+end
+
+collect_free_variables!(vars, x) = nothing
+
+collect_free_variables!(vars, s::Symbol) = (s in RESERVED_SYMBOLS || push!(vars, s); nothing)
+
+function collect_free_variables!(vars, expr::Expr)
+    # In a call the first argument is the callee, not a variable.
+    operands = expr.head === :call ? @view(expr.args[2:end]) : expr.args
+    collect_free_variables!(vars, operands)
+end
+
+function collect_free_variables!(vars, xs::AbstractVector)
+    for x in xs
+        collect_free_variables!(vars, x)
+    end
+    return nothing
 end
 
 end
