@@ -361,8 +361,14 @@ function transform_or(args)
 end
 
 function generate_function_code(parsed_expr; arg_names::Vector{Symbol} = [:t2],
+                                arg_types::Union{Nothing,Vector{Symbol}} = nothing,
                                 func_name::Symbol = :generated_func)
-    args_str = join(arg_names, ", ")
+    local args_str::Vector
+    if isnothing(arg_types) || length(arg_types) == 0
+        args_str = join(arg_names, ", ")
+    else
+        args_str = join(["$(an)::$(at)" for (an, at) in zip(arg_names, arg_types)])
+    end
     body_str = string(parsed_expr)
 
     return """
@@ -388,6 +394,7 @@ argument order. Returns the generated code, which is also written to `output_pat
 """
 function generate_function_code(input_path::AbstractString, output_path::AbstractString;
                                 arg_names::Union{Nothing,Vector{Symbol}} = nothing,
+                                arg_types::Union{Nothing,Vector{Symbol}} = nothing,
                                 func_name::Union{Nothing,Symbol} = nothing)
     text = read(input_path, String)
     isempty(strip(text)) && error("Input file is empty: $(input_path)")
@@ -396,13 +403,11 @@ function generate_function_code(input_path::AbstractString, output_path::Abstrac
     args = arg_names === nothing ? free_variables(parsed_expr) : arg_names
     name = func_name === nothing ? default_func_name(input_path) : func_name
 
-    code = generate_function_code(parsed_expr; arg_names = args, func_name = name)
+    code = generate_function_code(parsed_expr; arg_names = args, func_name = name, arg_types = arg_types)
 
     out_dir = dirname(output_path)
     isempty(out_dir) || mkpath(out_dir)
     write(output_path, code)
-
-    return code
 end
 
 function default_func_name(input_path::AbstractString)
