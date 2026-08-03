@@ -363,7 +363,7 @@ end
 function generate_function_code(parsed_expr; arg_names::Vector{Symbol} = [:t2],
                                 arg_types::Union{Nothing,Vector{DataType}} = nothing,
                                 func_name::Symbol = :generated_func)
-    local args_str::Vector
+    local args_str::String
     if isnothing(arg_types) || length(arg_types) == 0
         args_str = join(arg_names, ", ")
     else
