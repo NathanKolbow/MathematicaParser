@@ -367,7 +367,7 @@ function generate_function_code(parsed_expr; arg_names::Vector{Symbol} = [:t2],
     if isnothing(arg_types) || length(arg_types) == 0
         args_str = join(arg_names, ", ")
     else
-        args_str = join(["$(an)::$(at)" for (an, at) in zip(arg_names, arg_types)])
+        args_str = join(["$(an)::$(at)" for (an, at) in zip(arg_names, arg_types)], ", ")
     end
     body_str = string(parsed_expr)
 
